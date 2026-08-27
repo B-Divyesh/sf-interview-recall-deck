@@ -49,8 +49,11 @@ test('legal pages have one main heading and a main landmark', async ({ page }) =
   }
 });
 
-test('home has no serious or critical automated accessibility violations', async ({ page }) => {
+test('every app route has no serious or critical automated accessibility violations', async ({ page }) => {
   await page.goto('/');
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter(item => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+  for (const route of ['home', 'deck', 'edit', 'rehearse', 'sheet', 'settings']) {
+    await page.goto(`/#/${route}`);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.filter(item => ['serious', 'critical'].includes(item.impact ?? '')), route).toEqual([]);
+  }
 });

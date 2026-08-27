@@ -39,7 +39,9 @@ npm run test:e2e
 - `npm run test:e2e`: exercises a Pixel 5-sized viewport (393px), create,
   IndexedDB persistence, a true offline page reload, rehearsal completion,
   recall sheet, and both legal pages. It also asserts no console errors and runs
-  axe with zero serious/critical findings.
+  axe across every app route with zero serious/critical findings.
+- The factory `verify-url.sh` check passes: title, `lang`, one `h1`, main
+  landmark, image alternatives, button labels, and an empty console are present.
 - Lighthouse 12.8.2 mobile, run against the production preview on 2026-08-27:
   Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 0.9s,
   LCP 1.2s, TBT 0ms, CLS 0, total transfer 57 KiB.
