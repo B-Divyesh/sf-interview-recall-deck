@@ -3,9 +3,28 @@
   "title": "Interview Recall Deck",
   "territory": "utilities",
   "user": "A job seeker with ADHD who needs a low-pressure, repeatable way to prepare and retrieve their own experience examples under interview stress.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/42835850",
+      "date": "2025-01-27",
+      "quote_or_summary": "An unemployed developer with ADHD says impaired executive function and memory make advance preparation and recall during interviews extremely difficult."
+    },
+    {
+      "url": "https://github.com/psgods101/scout/issues/11",
+      "date": "2026-06-24",
+      "quote_or_summary": "A request explicitly seeks ADHD/dyslexia-friendly developer and focus tooling, including voice-oriented supports and reduced cognitive load."
+    }
+  ],
+  "recurrence": "Two independent requests across 2025–26; the harm is missed employment opportunity rather than ordinary productivity friction.",
+  "current_workaround": "Use generic flashcards, cram notes, ask an LLM to invent answers, or keep scattered documents that are hard to retrieve under pressure.",
+  "incumbents_and_gap": "Anki, Notion templates and interview-prep services are flexible but demand setup and rarely rehearse retrieval of a user's own evidence in short, accessible chunks.",
   "smallest_useful_product": "An offline PWA that turns a user's own projects into short prompt/evidence cards, supports a timed but pausable voice-or-text rehearsal, and surfaces a one-page pre-interview recall sheet.",
   "success_measure": "After seven days, at least 60% of pilot users can recall three concrete examples for each chosen competency without consulting full notes.",
   "artifact_class": "pwa-offline",
   "monetization": "one-time",
-  "constraints": "Local-first encrypted export; explicitly label any optional drafting aid as user-edited; no mental-health claims; accessibility includes keyboard, TTS and reduced-motion controls."
+  "constraints": "Local-first encrypted export; explicitly label any optional drafting aid as user-edited; no mental-health claims; accessibility includes keyboard, TTS and reduced-motion controls.",
+  "est_build_effort": "S",
+  "why_distinct": "It supports truthful recall of a person's own work rather than becoming an interview-answer generator or a generic task manager.",
+  "confidence": 4,
+  "state": "RESEARCHED"
 }
