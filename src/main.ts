@@ -97,8 +97,8 @@ function editorView(id?: string): string {
   if (!example && !unlocked && examples.length >= FREE_EXAMPLE_LIMIT) return `${pageHead('Deck limit', 'Your six examples are ready', 'The free deck remains fully usable. Unlimited examples are included in the one-time unlock.')}<div class="glass-callout"><a class="button primary" href="#/settings">See the $9 unlock</a><a class="button quiet" href="#/deck">Back to deck</a></div>`;
   const value = (key: keyof Example) => esc(String(example?.[key] ?? ''));
   return `${pageHead('Your own words', example ? 'Edit this example' : 'Capture one true moment', 'Write landmarks, not a polished script. You can refine this later.')}
-    <form id="example-form" class="editor" data-id="${example?.id ?? ''}" novalidate>
-      <div class="form-intro"><span>01</span><div><h2>Name the moment</h2><p>A project or event you can picture clearly.</p></div></div>
+    <form id="example-form" class="editor" data-id="${esc(example?.id ?? '')}" novalidate>
+      <p class="required-note span-2">Fields marked * are required.</p><div class="form-intro"><span>01</span><div><h2>Name the moment</h2><p>A project or event you can picture clearly.</p></div></div>
       <div class="field span-2"><label for="title">Project or moment <b aria-hidden="true">*</b></label><input id="title" name="title" value="${value('title')}" required maxlength="80" autocomplete="off"><small>For example: “Checkout reliability launch”</small></div>
       <div class="field"><label for="role">Your role</label><input id="role" name="role" value="${value('role')}" maxlength="60" autocomplete="off"></div>
       <div class="field"><label for="competencies">Competencies</label><input id="competencies" name="competencies" value="${esc(example?.competencies.join(', ') ?? '')}" maxlength="120" aria-describedby="competency-help"><small id="competency-help">Separate with commas: leadership, debugging</small></div>
@@ -109,7 +109,7 @@ function editorView(id?: string): string {
       <div class="form-intro"><span>03</span><div><h2>Choose the doorway</h2><p>This short phrase will start your rehearsal.</p></div></div>
       <div class="field span-2"><label for="cue">Recall cue</label><input id="cue" name="cue" value="${value('cue')}" maxlength="100" placeholder="The Friday rollback"><small>Your words only. The app does not invent experience.</small></div>
       <div id="form-error" class="form-error" role="alert"></div>
-      <div class="form-actions span-2"><button class="button primary" type="submit">Save example</button><a class="button quiet" href="#/deck">Cancel</a>${example ? `<button class="button danger" type="button" data-action="delete" data-id="${example.id}">Delete example</button>` : ''}</div>
+      <div class="form-actions span-2"><button class="button primary" type="submit">Save example</button><a class="button quiet" href="#/deck">Cancel</a>${example ? `<button class="button danger" type="button" data-action="delete" data-id="${esc(example.id)}">Delete example</button>` : ''}</div>
     </form>`;
 }
 

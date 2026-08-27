@@ -62,7 +62,7 @@ export async function encryptExport(data: ExportData, passphrase: string): Promi
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
-  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, new TextEncoder().encode(JSON.stringify(data)));
   return JSON.stringify({ format: 'recall-deck-encrypted', version: 1, salt: bytesToBase64(salt), iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(encrypted)) });
 }
 
@@ -73,9 +73,13 @@ export async function decryptExport(source: string, passphrase: string): Promise
     const salt = base64ToBytes(String(packet.salt));
     const iv = base64ToBytes(String(packet.iv));
     const key = await deriveKey(passphrase, salt);
-    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, base64ToBytes(String(packet.data)));
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, base64ToBytes(String(packet.data)) as BufferSource);
     const result = JSON.parse(new TextDecoder().decode(decrypted)) as ExportData;
-    if (result.version !== 1 || !Array.isArray(result.examples) || !Array.isArray(result.sessions)) throw new Error();
+    const validExample = (item: Example) => typeof item?.id === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(item.id)
+      && ['title', 'role', 'situation', 'action', 'result', 'cue', 'createdAt', 'updatedAt'].every(key => typeof item[key as keyof Example] === 'string')
+      && Array.isArray(item.competencies) && item.competencies.every(value => typeof value === 'string');
+    const validSession = (item: Session) => typeof item?.id === 'string' && Array.isArray(item.results);
+    if (result.version !== 1 || !Array.isArray(result.examples) || !result.examples.every(validExample) || !Array.isArray(result.sessions) || !result.sessions.every(validSession) || typeof result.preferences !== 'object') throw new Error();
     return result;
   } catch {
     throw new Error('That file or passphrase did not work. Check both and try again.');

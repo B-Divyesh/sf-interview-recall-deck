@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://interview-recall-deck.sociobot.in/sitemap.xml

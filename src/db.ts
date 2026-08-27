@@ -33,7 +33,8 @@ async function store(name: string, mode: IDBTransactionMode = 'readonly') {
 }
 
 export async function getExamples(): Promise<Example[]> {
-  const rows = await requestPromise(await store('examples').getAll()) as Example[];
+  const objectStore = await store('examples');
+  const rows = await requestPromise(objectStore.getAll()) as Example[];
   return rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -46,7 +47,8 @@ export async function deleteExample(id: string): Promise<void> {
 }
 
 export async function getSessions(): Promise<Session[]> {
-  const rows = await requestPromise(await store('sessions').getAll()) as Session[];
+  const objectStore = await store('sessions');
+  const rows = await requestPromise(objectStore.getAll()) as Session[];
   return rows.sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 }
 
