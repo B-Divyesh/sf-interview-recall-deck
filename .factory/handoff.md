@@ -1,64 +1,87 @@
 # Handoff — Interview Recall Deck
 
-## What shipped
+## Verification verdict: FAIL
 
-- A complete Vite + vanilla TypeScript offline PWA for capturing the user’s own
-  situation/action/result evidence, tagging competencies, and adding short cues.
-- A timed 60/90-second rehearsal with pause/resume, optional TTS, optional
-  browser dictation, delayed evidence reveal, and a non-judgmental self-check.
-- A printable one-page recall sheet grouped by competency, showing up to three
-  concrete examples per competency and visible gaps toward the pilot goal.
-- IndexedDB persistence plus AES-256-GCM/PBKDF2 encrypted JSON export/import and
-  readable CSV export. There are no accounts, analytics, CDNs, or cloud copies.
-- A useful six-example free tier. The $9 one-time Sociobot unlock adds unlimited
-  cards, longer rounds, and local rehearsal history. Checkout, callback token
-  capture, daily-cached verification, restore, revocation, and offline-safe
-  behavior follow the paid-unlock contract. No product ID is hardcoded.
-- PWA manifest, authored 192/512 icons, generated versioned service worker,
-  offline fallback, update notice, and mobile safe-area navigation.
-- Real `/privacy/` and `/terms/` pages, README, MIT license, robots, and sitemap.
-- The original generated hero illustration and its prompt/provenance are stored
-  in `assets/src/`; shipped WebP variants are 39 KB and 96 KB.
+Candidate tested: `8e9edca6c6cbf8d00bc8b37dc5d3883ddf790106` (`main`)
 
-## Verification
+Target URL: <https://interview-recall-deck.sociobot.in>
 
-Run from a clean checkout:
+The candidate builds and most core recall/rehearsal flows work locally, but it
+must not ship. The production hostname fails normal TLS validation, and the
+local product cannot create or restore the encrypted backups required by the
+brief. Pasted-license restoration is broken for the same reason.
 
-```sh
-npm install
-npm test
-npm run build
-npx playwright install chromium   # once, when the browser is absent
-npm run test:e2e
-```
+See [.factory/verification.md](verification.md) for complete, reproducible
+evidence.
 
-- `npm test`: 5/5 unit tests pass, including encrypted-backup round trip and
-  wrong-passphrase handling.
-- `npm run build`: passes TypeScript and Vite production builds; output is
-  `dist/` with `index.html` at its root.
-- `npm run test:e2e`: exercises a Pixel 5-sized viewport (393px), create,
-  IndexedDB persistence, a true offline page reload, rehearsal completion,
-  recall sheet, and both legal pages. It also asserts no console errors and runs
-  axe across every app route with zero serious/critical findings.
-- The factory `verify-url.sh` check passes: title, `lang`, one `h1`, main
-  landmark, image alternatives, button labels, and an empty console are present.
-- Lighthouse 12.8.2 mobile, run against the production preview on 2026-08-27:
-  Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 0.9s,
-  LCP 1.2s, TBT 0ms, CLS 0, total transfer 57 KiB.
-- Production assets: initial JavaScript 32.61 KB (11.57 KB gzip), app CSS 18.60
-  KB (5.01 KB gzip), mobile hero 39 KB. All are inside the specified budgets.
-- `npm audit`: 0 known vulnerabilities after upgrading the image build tool.
-- Desktop and full-page 393px screenshots were manually reviewed for overflow,
-  hierarchy, fixed navigation placement, contrast, and artwork quality.
+## What was independently verified
 
-## Known gaps / release notes
+- Clean `npm ci` completed with 0 audit vulnerabilities.
+- `npm test` passed: 5/5 Vitest tests.
+- `npm run build` passed (`tsc --noEmit`, Vite build, service-worker generation)
+  and produced `dist/`.
+- After `npx playwright install chromium` (the clean lockfile resolves
+  Playwright 1.62.1, whose browser was not preinstalled), `npm run test:e2e`
+  passed: 3/3. This includes IndexedDB persistence, offline reload,
+  rehearsal, legal pages, console checking, and axe.
+- Independent local browser checks at desktop 1440px and exact 390px mobile
+  found one `<h1>`, one `<main>`, no horizontal overflow, a 3px visible focus
+  ring, working skip link, keyboard-operated Reduce motion, no console/page
+  errors, no unexpected outbound requests, and zero axe serious/critical
+  findings across all app routes.
+- The normal flow works locally: invalid required-field recovery focuses the
+  first required field; a truthful card saves and persists; timed rehearsal
+  pauses, reveals evidence only on request, records a rating; and the recall
+  sheet groups the saved example. Title input limits at 80 characters and six
+  cards produce the free-tier limit state.
+- PWA checks passed locally: a controlled service-worker offline reload kept a
+  saved card available; a separate update simulation fetched a changed
+  `sw.js`, called `registration.update()`, and displayed “A fresh version is
+  ready.” The generated worker has a hash-derived cache name, precaches the
+  shell, calls `skipWaiting`, and claims clients.
+- Budget evidence: app JS is 32,605 B raw / 11,570 B gzip; app CSS is 18,598 B
+  raw / 5,010 B gzip; mobile hero is 39,172 B. These meet the stated static
+  budgets. Lighthouse 13 could not connect to the available Chrome 151 binary
+  in this container, so no Lighthouse score is claimed.
+- Privacy inspection and request capture found no analytics, third-party fonts,
+  scripts, or ordinary-flow network calls. The only product network code is
+  optional Sociobot license verification.
+- With TLS verification disabled solely for diagnosis, the live site contains
+  exactly the candidate output: SHA-256 matched 16/16 distributable files.
 
-- Browser dictation depends on the browser/OS speech-recognition implementation;
-  unsupported or denied cases fall back to typed or thought-aloud rehearsal.
-- The factory still needs to register the product/return URL with the Sociobot
-  billing engine. Localhost intentionally uses `pilot-api.sociobot.in`; the live
-  Sociobot hostname automatically uses the production API.
-- Cross-device sync is intentionally absent to keep sensitive career details
-  local. Users move data with encrypted backups.
-- No real-user seven-day outcome data exists yet; the product makes the target
-  (three examples per competency) visible on the recall sheet for pilot study.
+## Release-blocking defects
+
+1. **P0 — Production URL is not usable with normal TLS verification.**
+   `curl https://interview-recall-deck.sociobot.in/` fails with error 60:
+   “no alternative certificate subject name matches target host name.” The
+   served certificate is for `*.msha-slice-7-eus2-1-ase.p.azurewebsites.net`,
+   not `interview-recall-deck.sociobot.in`. Insecure requests can retrieve the
+   exact candidate artifact, but normal browsers reject the URL before the PWA
+   loads. Repair the deployment hostname/certificate binding and retest without
+   `-k`.
+
+2. **P1 — Encrypted backup export, import, and pasted-license restore are
+   nonfunctional.** The controls in `src/main.ts` have IDs but no `name`
+   attributes, while their handlers use `FormData.get('export-passphrase')`,
+   `FormData.get('import-file')`, `FormData.get('import-passphrase')`, and
+   `FormData.get('license-token')`. Browser evidence: after entering a valid
+   passphrase, export reports “Use at least 8 characters for the export
+   passphrase.” because FormData yields `null` (stringified as `"null"`).
+   Import always treats the file as missing; pasted license has an empty token.
+   This violates the brief’s local-first encrypted export/import constraint and
+   the paid-unlock restore requirement.
+
+3. **P2 — Deployment cache policy misses the PWA asset policy.** The live
+   hashed JS/CSS and `sw.js` all return `Cache-Control: public,
+   must-revalidate, max-age=30`, rather than long-lived immutable caching for
+   hashed assets. The service worker masks this after first load, but normal
+   cache efficiency and the stated deployment policy are not met.
+
+## Required next steps
+
+1. Bind and validate the live hostname’s certificate, then retest the URL with
+   a standard browser/TLS client.
+2. Add the missing form `name` attributes and add end-to-end tests for encrypted
+   export download, confirmed import replacement, and pasted-license restore.
+3. Configure immutable caching for hashed assets while keeping `sw.js` and
+   HTML short-lived/revalidated; rerun live header checks.
