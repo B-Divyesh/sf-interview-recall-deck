@@ -1,0 +1,11 @@
+{
+  "slug": "interview-recall-deck",
+  "title": "Interview Recall Deck",
+  "territory": "utilities",
+  "user": "A job seeker with ADHD who needs a low-pressure, repeatable way to prepare and retrieve their own experience examples under interview stress.",
+  "smallest_useful_product": "An offline PWA that turns a user's own projects into short prompt/evidence cards, supports a timed but pausable voice-or-text rehearsal, and surfaces a one-page pre-interview recall sheet.",
+  "success_measure": "After seven days, at least 60% of pilot users can recall three concrete examples for each chosen competency without consulting full notes.",
+  "artifact_class": "pwa-offline",
+  "monetization": "one-time",
+  "constraints": "Local-first encrypted export; explicitly label any optional drafting aid as user-edited; no mental-health claims; accessibility includes keyboard, TTS and reduced-motion controls."
+}
