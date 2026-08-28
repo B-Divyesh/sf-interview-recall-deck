@@ -1,64 +1,88 @@
-# Handoff — adversarial first-read review 1
+# Handoff — perfection loop round 1
 
-## Status: FAIL
+## Status: PASS
 
-Reviewed commit `1d665c9c7ad5e0584cccf172275a17ce2bf9b13b` and the live site at
-<https://interview-recall-deck.sociobot.in> on 2026-08-28. Product code was not
-modified. The full report is in `.factory/review-1.md`.
+Primary repair commit: `4524270` on `main`. Artifact class remains a static,
+local-first offline PWA. The luminous glass landscape, original generated art,
+dark-only palette, and interaction grammar are preserved.
 
-## What was done
+## Blocking review findings closed
 
-- Inspected the live first screen in fresh 390×844 and 1440×900 Chromium
-  contexts before scrolling.
-- Audited every landing-page and README copy unit with word counts, plain-word
-  flags, terminology issues, and proposed rewrites.
-- Exercised `/demo` and `?demo=1`, including a storage-isolation probe.
-- Checked the absent claims manifest/tags and inventoried the unlisted live and
-  README claims.
-- Exercised live offline reload and normal-flow network interception.
-- Audited titles, metadata, deep links, Back/focus behavior, 404 handling,
-  navigation/footer consistency, touch targets, and every discovered link.
-- Ran live verification and axe scans on eight routes at mobile and desktop.
-- Ran install, unit tests, lint, build, and the full browser suite from a clean
-  clone.
+1. **B1 first screen:** headline is “Recall your work examples in interviews.”
+   It names job seekers, pressure, the sample action, its result, and three
+   tested facts within the 390×844 first screen.
+2. **B2 demo:** `/demo` and `/?demo=1` seed three realistic examples. The
+   persistent banner includes Reset demo and Start for real. Demo records use
+   `demo:interview-recall-deck`; real records use `interview-recall-deck`.
+   Leaving demo deletes the demo database.
+3. **B3 offline:** `staticwebapp.config.json` is excluded from precache. Failed
+   registration now produces a visible recovery alert. A warmed `/demo`
+   reloads and remains usable with the context offline.
+4. **B4 claims:** `.factory/claims.json` inventories 14 claims. Each ID appears
+   in exactly one tagged observable browser test. Copy was simplified and
+   audited in `.factory/copy-audit.md`.
+5. **B5 routes:** Home, Demo, Deck, Edit, Rehearse, Recall sheet, Settings,
+   Privacy, and Terms use History API URLs. Titles, canonical URLs, heading
+   focus, Back/Forward, route announcements, and direct reloads are tested.
+   Unknown direct requests return the designed `404.html` with status 404.
+6. **B6 checkout:** the Sociobot endpoint still returns its external
+   “enabled factory product” 404. The dead purchase action and purchase promise
+   were removed. The UI plainly says purchases are paused. Existing license
+   restore remains tested against the Sociobot contract.
 
-## Blocking results
+The major findings are also closed: every route gets full sharing metadata and
+the derived 1200×630 preview; route focus moves to `h1`; header/footer/legal
+links are shared; navigation has four primary items; Privacy and pricing status
+appear on the landing page; and interactive targets pass 44×44 checks at 390px.
 
-1. The first screen does not name job seekers or the interview situation.
-2. No sample-data demo or isolated demo namespace exists; `?demo=1` writes to
-   the regular IndexedDB database.
-3. Live offline reload fails because the service worker precaches a deployed
-   404 (`/staticwebapp.config.json`) and never installs.
-4. `.factory/claims.json`, `.factory/demo.md`, and `@claim:*` tests are absent.
-5. App navigation is hash-based; real deep links and unknown paths render home
-   with HTTP 200, and there is no designed 404.
-6. “Buy the $9 lifetime unlock” targets a Sociobot API URL that returns 404.
+## Verification evidence
 
-## Verification commands and results
+- `npm ci`: 152 packages installed; 0 audit vulnerabilities.
+- `npm run lint`: pass.
+- `npm test`: 6/6 Vitest unit/integration tests pass.
+- `npm run build`: pass; `dist/index.html` exists.
+- `npm run test:e2e`: 44/44 pass across 1440×900 and 390×844 Chromium.
+- Clean clone of `4524270`: `npm ci` and `npm run build` pass. Every one of the
+  14 claim commands was invoked independently; 28/28 desktop/mobile claim
+  executions pass.
+- Offline claim: fresh context, service-worker controller and versioned cache,
+  context offline, `/demo` reload, then seeded rehearsal entry — pass.
+- Privacy claim: full sample edit/reload/exit flow has zero cross-origin
+  requests; real and demo database names are inspected before and after exit.
+- Axe integration covers all app/legal routes and the direct 404 at both
+  viewports: 0 serious or critical violations.
+- `verify-url.sh http://127.0.0.1:4173 .factory/evidence/local`: HTTP 200,
+  title/lang, one `h1`, main landmark, 0 missing alts, 0 unlabeled buttons, and
+  0 console/page errors. Report: `.factory/evidence/local/verify.json`.
+- Lighthouse 13 mobile: performance 98, accessibility 100, best practices 100,
+  SEO 100; LCP 1.8 s, CLS 0, total blocking time 130 ms. Report:
+  `.factory/evidence/local/lighthouse.json`.
+- Production resources: JS 41.29 KB raw / 14.19 KB gzip; CSS 20.59 KB raw /
+  5.41 KB gzip; mobile hero 39.17 KB; social preview 150.56 KB.
+- Visual inspection: 390×844 first screen and demo, plus 1440×900 landing,
+  have no horizontal overflow and retain the product-specific art direction.
 
-From a clean clone:
+## Run and verify
 
 ```sh
 npm ci
-npm test
 npm run lint
+npm test
 npm run build
 npm run test:e2e
 ```
 
-Results: 6/6 unit tests passed, lint passed, the build produced `dist/`, and
-12/12 Playwright tests passed across desktop and 390px mobile. Live axe scans
-reported zero automated violations on the app, Privacy, and Terms routes.
+Run any individual claim using its command in `.factory/claims.json`. The
+production-equivalent test server is `node scripts/serve-dist.mjs`.
 
-The repository's local offline test is not evidence for the live claim: Vite
-Preview serves `staticwebapp.config.json`, while the deployment returns 404 for
-it. Live Chromium had no service-worker registration and offline reload ended
-with `ERR_INTERNET_DISCONNECTED`.
+## Deploy
 
-## Next steps
+```sh
+/opt/fleet/lib/deploy-static.sh interview-recall-deck dist
+```
 
-Implement and test the demo namespace first, add the claims manifest and tagged
-tests, fix the service-worker precache list, replace hash routes with real routes
-plus a designed 404, enable or remove the dead checkout, then apply the copy and
-metadata fixes in the report. Re-run the live review from a clean browser after
-deployment.
+## Known gaps
+
+No blocking finding remains. New purchase checkout is intentionally unavailable
+until the external Sociobot product registration is enabled; the product has no
+dead purchase link or purchase-availability claim.
