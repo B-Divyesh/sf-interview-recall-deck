@@ -151,7 +151,18 @@ test('@claim:pwa-install registers a versioned complete app-shell cache', async 
 });
 
 test('@claim:free-entitlements enforces six examples while keeping core tools free', async ({ page }) => {
-  for (let index = 1; index <= 6; index++) await createExample(page, `Example ${index}`);
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('interview-recall-deck', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = database.transaction('examples', 'readwrite');
+    for (let index = 1; index <= 6; index++) transaction.objectStore('examples').put({ id: `limit-${index}`, title: `Example ${index}`, role: 'Engineer', situation: 'A real situation.', action: 'I took a clear action.', result: 'The work had a result.', competencies: ['Ownership'], cue: `Cue ${index}`, createdAt: `2026-01-0${index}T00:00:00.000Z`, updatedAt: `2026-01-0${index}T00:00:00.000Z` });
+    await new Promise<void>((resolve, reject) => { transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(transaction.error); });
+    database.close();
+  });
   await page.goto('/edit');
   await expect(page.getByRole('heading', { name: 'Your six examples are ready' })).toBeVisible();
   await page.goto('/rehearse');
