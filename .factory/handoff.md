@@ -1,87 +1,50 @@
-# Handoff — Interview Recall Deck
+# Handoff — Interview Recall Deck repair
 
-## Verification verdict: FAIL
+## Release status: PASS
 
-Candidate tested: `8e9edca6c6cbf8d00bc8b37dc5d3883ddf790106` (`main`)
+Primary repair commit: `71d529f` (followed by this handoff, lint gate, and final keyboard/privacy test coverage). Deployed target: <https://interview-recall-deck.sociobot.in>.
 
-Target URL: <https://interview-recall-deck.sociobot.in>
+The three independent-verifier findings have been repaired without changing the researched brief, product class, visual system, or successful recall workflow.
 
-The candidate builds and most core recall/rehearsal flows work locally, but it
-must not ship. The production hostname fails normal TLS validation, and the
-local product cannot create or restore the encrypted backups required by the
-brief. Pasted-license restoration is broken for the same reason.
+## Repairs
 
-See [.factory/verification.md](verification.md) for complete, reproducible
-evidence.
+1. **P0 — live TLS:** The static deployment was rerun through the factory static deployment configuration, which re-registers the custom domain and managed certificate. On 2026-08-28, ordinary `curl` returned HTTPS 200 and the peer certificate subject/SAN was `interview-recall-deck.sociobot.in`.
+2. **P1 — encrypted portability and license restore:** Added the missing `name` attributes for `export-passphrase`, `import-file`, `import-passphrase`, and `license-token`. FormData now receives the values used by the existing export/import/restore handlers.
+3. **P2 — cache policy:** Added `public/staticwebapp.config.json`. HTML and `sw.js` are revalidated (`public, max-age=0, must-revalidate`), while hashed `/assets/*` receive `public, max-age=31536000, immutable`. The same configuration adds a restrictive self-hosted CSP, Permissions-Policy, Referrer-Policy, and `nosniff` response policy.
 
-## What was independently verified
+## Regression coverage
 
-- Clean `npm ci` completed with 0 audit vulnerabilities.
-- `npm test` passed: 5/5 Vitest tests.
-- `npm run build` passed (`tsc --noEmit`, Vite build, service-worker generation)
-  and produced `dist/`.
-- After `npx playwright install chromium` (the clean lockfile resolves
-  Playwright 1.62.1, whose browser was not preinstalled), `npm run test:e2e`
-  passed: 3/3. This includes IndexedDB persistence, offline reload,
-  rehearsal, legal pages, console checking, and axe.
-- Independent local browser checks at desktop 1440px and exact 390px mobile
-  found one `<h1>`, one `<main>`, no horizontal overflow, a 3px visible focus
-  ring, working skip link, keyboard-operated Reduce motion, no console/page
-  errors, no unexpected outbound requests, and zero axe serious/critical
-  findings across all app routes.
-- The normal flow works locally: invalid required-field recovery focuses the
-  first required field; a truthful card saves and persists; timed rehearsal
-  pauses, reveals evidence only on request, records a rating; and the recall
-  sheet groups the saved example. Title input limits at 80 characters and six
-  cards produce the free-tier limit state.
-- PWA checks passed locally: a controlled service-worker offline reload kept a
-  saved card available; a separate update simulation fetched a changed
-  `sw.js`, called `registration.update()`, and displayed “A fresh version is
-  ready.” The generated worker has a hash-derived cache name, precaches the
-  shell, calls `skipWaiting`, and claims clients.
-- Budget evidence: app JS is 32,605 B raw / 11,570 B gzip; app CSS is 18,598 B
-  raw / 5,010 B gzip; mobile hero is 39,172 B. These meet the stated static
-  budgets. Lighthouse 13 could not connect to the available Chrome 151 binary
-  in this container, so no Lighthouse score is claimed.
-- Privacy inspection and request capture found no analytics, third-party fonts,
-  scripts, or ordinary-flow network calls. The only product network code is
-  optional Sociobot license verification.
-- With TLS verification disabled solely for diagnosis, the live site contains
-  exactly the candidate output: SHA-256 matched 16/16 distributable files.
+- Browser coverage explicitly downloads an encrypted JSON backup with a valid passphrase, verifies it does not expose plaintext, imports it after confirmation, and checks that the restored card is visible.
+- Browser coverage intercepts the pilot verification endpoint, pastes a license token, verifies it is stored, and confirms the unlimited state.
+- Browser coverage runs on desktop 1440×900 and exact 390×844 mobile. It includes offline reload/persistence, rehearsal, all routes with axe, legal pages, keyboard skip-link and Reduce motion operation, no horizontal overflow, no console errors, and no normal-flow outbound requests.
+- Unit coverage asserts the static deployment cache and response-policy configuration, in addition to the existing encrypted data tests.
+- Playwright is pinned to `1.58.2`, matching the worker-provided Chromium.
 
-## Release-blocking defects
+## Verification evidence
 
-1. **P0 — Production URL is not usable with normal TLS verification.**
-   `curl https://interview-recall-deck.sociobot.in/` fails with error 60:
-   “no alternative certificate subject name matches target host name.” The
-   served certificate is for `*.msha-slice-7-eus2-1-ase.p.azurewebsites.net`,
-   not `interview-recall-deck.sociobot.in`. Insecure requests can retrieve the
-   exact candidate artifact, but normal browsers reject the URL before the PWA
-   loads. Repair the deployment hostname/certificate binding and retest without
-   `-k`.
+- Clean install: `npm ci` — passed, 0 audit vulnerabilities.
+- Lint: `npm run lint` — passed (ESLint now checks app, browser tests, and Vite/Playwright configuration).
+- Unit/integration: `npm test` — **6/6 passed**.
+- Type check and production build: `npm run build` — passed; `dist/index.html` is present. App JS is 32,695 B raw / 11.59 kB gzip; app CSS is 18,598 B raw / 5.01 kB gzip; 768px hero WebP is 39,172 B.
+- Browser suite: `npm run test:e2e` — **12/12 passed** across desktop and 390px mobile. It includes the explicit offline reload check (`context.setOffline(true)`) and automated axe checks with no serious or critical violations.
+- Local post-build browser verification: `verify-url.sh` — title/lang, one h1, main landmark, image alt coverage, and console all passed (0 errors).
+- Live verification: `verify-url.sh https://interview-recall-deck.sociobot.in` — HTTPS 200, 893ms observed load, 0 browser errors, title/lang, one h1, main landmark, 0 missing image alts, and 0 unlabelled buttons.
+- Live identity: SHA-256 matched **16/16** public distributable files between `dist/` and the deployed host (the provider intentionally does not serve `staticwebapp.config.json`).
+- Live response policy: root and `sw.js` return revalidated cache headers; `assets/app-Wy8rfYlc.js` returns `Cache-Control: public, max-age=31536000, immutable`. Live responses also include CSP, Permissions-Policy, HSTS, Referrer-Policy, and `nosniff`.
+- Privacy: normal recall-flow browser requests stayed same-origin; source has no analytics, third-party fonts, or CDN scripts. License verification remains an optional Sociobot API request only.
 
-2. **P1 — Encrypted backup export, import, and pasted-license restore are
-   nonfunctional.** The controls in `src/main.ts` have IDs but no `name`
-   attributes, while their handlers use `FormData.get('export-passphrase')`,
-   `FormData.get('import-file')`, `FormData.get('import-passphrase')`, and
-   `FormData.get('license-token')`. Browser evidence: after entering a valid
-   passphrase, export reports “Use at least 8 characters for the export
-   passphrase.” because FormData yields `null` (stringified as `"null"`).
-   Import always treats the file as missing; pasted license has an empty token.
-   This violates the brief’s local-first encrypted export/import constraint and
-   the paid-unlock restore requirement.
+## Known non-blocker
 
-3. **P2 — Deployment cache policy misses the PWA asset policy.** The live
-   hashed JS/CSS and `sw.js` all return `Cache-Control: public,
-   must-revalidate, max-age=30`, rather than long-lived immutable caching for
-   hashed assets. The service worker masks this after first load, but normal
-   cache efficiency and the stated deployment policy are not met.
+Lighthouse 13 was attempted against the live deployment using the supplied Chromium, but its tab crashed in this container before producing a score. No Lighthouse score is claimed. The shipped resource sizes are within the stated static-product budgets, and browser/axe verification passed.
 
-## Required next steps
+## Run and deploy
 
-1. Bind and validate the live hostname’s certificate, then retest the URL with
-   a standard browser/TLS client.
-2. Add the missing form `name` attributes and add end-to-end tests for encrypted
-   export download, confirmed import replacement, and pasted-license restore.
-3. Configure immutable caching for hashed assets while keeping `sw.js` and
-   HTML short-lived/revalidated; rerun live header checks.
+```sh
+npm ci
+npm test
+npm run build
+npm run test:e2e
+/opt/fleet/lib/deploy-static.sh interview-recall-deck dist
+```
+
+No additional product work is required for this repair.
