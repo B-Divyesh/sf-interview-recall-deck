@@ -66,7 +66,9 @@ See [the visual thesis](.factory/design.md), [privacy](privacy/index.html), and
 
 Deploy the contents of `dist/` as a static site. History fallback is not needed
 for app navigation because app routes use URL fragments; `/privacy/` and
-`/terms/` are emitted as real static paths.
+`/terms/` are emitted as real static paths. `public/staticwebapp.config.json`
+ships with the build: it revalidates HTML and `sw.js`, caches hashed `/assets/`
+for one year with `immutable`, and sends the product response-policy headers.
 
 ## License
 

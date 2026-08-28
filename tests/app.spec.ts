@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
 
-test('creates, persists, rehearses, and opens a recall sheet offline', async ({ page, context }) => {
-  const consoleErrors: string[] = [];
-  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
-  await page.goto('/');
-  await expect(page.locator('h1')).toHaveCount(1);
-  await page.getByRole('link', { name: 'Add your first example' }).first().click();
-  await page.getByLabel('Project or moment').fill('Checkout reliability');
+async function createExample(page: import('@playwright/test').Page, title = 'Checkout reliability'): Promise<void> {
+  await page.goto('/#/edit');
+  await page.getByLabel('Project or moment').fill(title);
   await page.getByLabel('Your role').fill('Lead engineer');
   await page.getByLabel('Competencies').fill('Ownership, Debugging');
   await page.getByLabel('Situation').fill('Retries were hiding payment failures before launch.');
@@ -15,7 +12,19 @@ test('creates, persists, rehearses, and opens a recall sheet offline', async ({ 
   await page.getByLabel('Result or learning').fill('Failed payments fell by 30 percent.');
   await page.getByLabel('Recall cue').fill('Friday rollback');
   await page.getByRole('button', { name: 'Save example' }).click();
-  await expect(page.getByRole('heading', { name: 'Checkout reliability' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+}
+
+test('creates, persists, rehearses, and opens a recall sheet offline', async ({ page, context }) => {
+  const consoleErrors: string[] = [];
+  const outboundRequests: string[] = [];
+  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('request', request => {
+    if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') outboundRequests.push(request.url());
+  });
+  await page.goto('/');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await createExample(page);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Checkout reliability' })).toBeVisible();
   await page.evaluate(() => navigator.serviceWorker.ready);
@@ -39,6 +48,7 @@ test('creates, persists, rehearses, and opens a recall sheet offline', async ({ 
   await page.getByRole('link', { name: 'Recall sheet', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ownership' })).toBeVisible();
   expect(consoleErrors).toEqual([]);
+  expect(outboundRequests).toEqual([]);
 });
 
 test('legal pages have one main heading and a main landmark', async ({ page }) => {
@@ -56,4 +66,58 @@ test('every app route has no serious or critical automated accessibility violati
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter(item => ['serious', 'critical'].includes(item.impact ?? '')), route).toEqual([]);
   }
+});
+
+test('downloads and restores an encrypted deck backup with named form controls', async ({ page }) => {
+  await createExample(page, 'Encrypted export proof');
+  await page.goto('/#/settings');
+  await page.getByLabel('Export passphrase').fill('correct horse battery staple');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^recall-deck-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const downloadedPath = await download.path();
+  expect(downloadedPath).not.toBeNull();
+  const encrypted = await readFile(downloadedPath!);
+  expect(JSON.parse(encrypted.toString())).toMatchObject({ format: 'recall-deck-encrypted', version: 1 });
+  expect(encrypted.toString()).not.toContain('Encrypted export proof');
+  await expect(page.getByText('Encrypted backup downloaded.')).toBeVisible();
+
+  await page.getByLabel('Encrypted backup file').setInputFiles({
+    name: download.suggestedFilename(),
+    mimeType: 'application/json',
+    buffer: encrypted
+  });
+  await page.getByLabel('Backup passphrase').fill('correct horse battery staple');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Replace deck from backup' }).click();
+  await expect(page).toHaveURL(/#\/deck$/);
+  await expect(page.getByRole('heading', { name: 'Encrypted export proof' })).toBeVisible();
+});
+
+test('restores a pasted license with its named form control', async ({ page }) => {
+  const token = 'restored-license-token';
+  await page.route('https://pilot-api.sociobot.in/api/v1/products/interview-recall-deck/verify?license=restored-license-token', route => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ valid: true, reason: 'ok' })
+  }));
+  await page.goto('/#/settings');
+  await page.getByLabel('Already bought it? Paste your license').fill(token);
+  await page.getByRole('button', { name: 'Verify and restore' }).click();
+  await expect(page.getByRole('heading', { name: 'Unlimited is active' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sb_license:interview-recall-deck'))).toBe(token);
+});
+
+test('keeps the skip link and reduced-motion control keyboard operable without overflow', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('main')).toBeFocused();
+  await page.goto('/#/settings');
+  const reduceMotion = page.getByLabel('Reduce motion');
+  await reduceMotion.focus();
+  await page.keyboard.press('Space');
+  await expect(reduceMotion).toBeChecked();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
