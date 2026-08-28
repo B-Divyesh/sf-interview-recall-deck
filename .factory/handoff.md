@@ -84,6 +84,24 @@ production-equivalent test server is `node scripts/serve-dist.mjs`.
 /opt/fleet/lib/deploy-static.sh interview-recall-deck dist
 ```
 
+Deployment `460bd108-5391-4397-a621-4d0b77713faf` completed successfully on
+2026-08-28. Azure reused `sf-interview-recall-deck` in `eastus2`; the custom
+domain reported Ready and <https://interview-recall-deck.sociobot.in> returned
+HTTPS 200.
+
+Live post-deploy evidence:
+
+- `/`, `/demo`, `/deck`, `/privacy`, and `/terms`: HTTP 200.
+- `/does-not-exist` and `/staticwebapp.config.json`: HTTP 404.
+- Live `verify-url.sh`: one `h1`, one main landmark, complete alt/button names,
+  and zero console errors. Report: `.factory/evidence/live/verify.json`.
+- Fresh 390px live context: `/?demo=1` replaced to `/demo`, rendered three
+  cards, opened only `demo:interview-recall-deck`, and registered cache
+  `recall-deck-index-loVIk81w`. Offline reload retained the banner, controller,
+  and all three cards with zero console errors.
+- Root responses revalidate; hashed JS is immutable for one year. Live CSP,
+  Permissions-Policy, HSTS, Referrer-Policy, and `nosniff` headers are present.
+
 ## Known gaps
 
 No blocking finding remains. New purchase checkout is intentionally unavailable
