@@ -91,3 +91,14 @@ or palette. Generated with the factory image deployment through
 imagery for this product. Source PNG and prompt sidecar are retained in `assets/src/`;
 optimized WebP is shipped. Generated imagery is disclosed in the footer.
 
+## Review-round refinements
+
+The real-route shell keeps the original dark-only luminous landscape. Desktop
+navigation remains a slim route rail. At 760px it becomes a four-item bottom
+rail; Settings moves to the footer so the primary navigation stays concise.
+The demo banner uses a pale-cyan solid plane, not a new visual theme, and keeps
+reset and exit controls visible above every sample screen.
+
+The Open Graph image is a 1200×630 crop of the original generated memory
+landscape. The Apple touch icon is rendered from the original hand-authored SVG.
+No new generated source, model, license, or prompt was introduced in this round.

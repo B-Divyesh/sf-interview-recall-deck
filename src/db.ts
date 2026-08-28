@@ -1,12 +1,18 @@
 import type { Example, Preferences, Session } from './types';
 import { defaultPreferences } from './types';
 
-const DB_NAME = 'interview-recall-deck';
+const REAL_DB_NAME = 'interview-recall-deck';
+const DEMO_DB_NAME = 'demo:interview-recall-deck';
 const DB_VERSION = 1;
+
+function databaseName(): string {
+  const url = new URL(location.href);
+  return url.pathname === '/demo' || url.searchParams.get('demo') === '1' ? DEMO_DB_NAME : REAL_DB_NAME;
+}
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(databaseName(), DB_VERSION);
     request.onerror = () => reject(request.error);
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -15,6 +21,15 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings');
     };
     request.onsuccess = () => resolve(request.result);
+  });
+}
+
+export function clearDemoDatabase(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DEMO_DB_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Close other demo tabs, then reset again.'));
   });
 }
 

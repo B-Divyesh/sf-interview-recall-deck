@@ -11,10 +11,6 @@ function baseUrl(): string {
     : 'https://api.sociobot.in';
 }
 
-export function checkoutUrl(): string {
-  return `${baseUrl()}/api/v1/products/${SLUG}/checkout`;
-}
-
 export function captureLicense(): void {
   const url = new URL(location.href);
   const token = url.searchParams.get('license');

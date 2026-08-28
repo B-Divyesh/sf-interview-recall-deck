@@ -6,7 +6,7 @@ async function files(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) out.push(...await files(full));
-    else if (!entry.name.endsWith('.map') && entry.name !== 'sw.js') out.push('/' + relative('dist', full).replaceAll('\\\\', '/'));
+    else if (!entry.name.endsWith('.map') && entry.name !== 'sw.js' && entry.name !== 'staticwebapp.config.json') out.push('/' + relative('dist', full).replaceAll('\\\\', '/'));
   }
   return out;
 }

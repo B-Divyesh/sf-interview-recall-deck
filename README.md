@@ -1,74 +1,62 @@
 # Interview Recall Deck
 
-Interview Recall Deck is an offline-first preparation tool for job seekers who
-find it hard to retrieve concrete examples under interview pressure. It turns
-the user’s own projects into short evidence cards, supports calm timed rehearsal,
-and produces a one-page pre-interview recall sheet.
+Interview Recall Deck helps job seekers recall real work examples under interview pressure.
 
-It is deliberately not an answer generator: every situation, action, result,
-and cue comes from the user. There is no account, cloud sync, analytics, or
-diagnostic claim. Data lives in IndexedDB in the current browser.
+Try the isolated sample deck at <https://interview-recall-deck.sociobot.in/demo>.
+It includes three realistic examples and never reads or changes your real deck.
 
-Live site: <https://interview-recall-deck.sociobot.in>
+## What it does
 
-## Features
+- Capture the situation, your action, the result, interview skills, and a recall cue.
+- Rehearse for 60 or 90 seconds, pause, resume, and reveal your saved evidence.
+- Read prompts aloud or use optional browser dictation after you choose it.
+- Print a one-page recall sheet grouped by interview skill.
+- Download an encrypted backup or a readable CSV file.
+- Install the app and reopen the sample deck offline after your first visit.
 
-- Structured situation/action/result cards with competency tags and recall cues
-- 60- or 90-second pausable rehearsal with evidence hidden until requested
-- User-initiated text-to-speech and optional browser-native dictation
-- Printable one-page recall sheet grouped by competency
-- AES-256-GCM encrypted JSON backup/import and readable CSV export
-- Installable PWA with a versioned app-shell cache and offline reload support
-- Free six-example deck; $9 one-time license unlock for unlimited examples,
-  longer rounds, and local rehearsal history
-- Keyboard operation, strong focus states, reduced motion, and a 390px mobile UI
+The app does not generate interview answers. Your examples, settings, and rehearsal history stay in this browser. There is no account, cloud sync, analytics, or tracking.
+
+The free deck holds six examples. Rehearsal, the recall sheet, accessibility controls, backups, and CSV exports stay free. New $9 license purchases are paused while checkout is repaired. Existing license holders can restore access in Settings.
 
 ## Run locally
 
-Requires Node.js 20 or newer.
+Use Node.js 20 or newer.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. Local development uses the Sociobot pilot billing
-API; the deployed `*.sociobot.in` site uses the production API.
+Open the URL printed by Vite. The direct demo entry is `http://localhost:5173/demo` or `/?demo=1`.
 
 ## Test and build
 
 ```sh
 npm test
+npm run lint
 npm run build
 npm run test:e2e
 ```
 
-The exact production build command is `npm run build`. Output lands in `dist/`
-with `dist/index.html` at its root. The end-to-end test expects the production
-build to exist and automatically serves it with `vite preview`. If Chromium is
-not already present, run `npx playwright install chromium` once.
+Each entry in [`.factory/claims.json`](.factory/claims.json) names its exact browser command. Build output goes to `dist/`, with `index.html` at its root.
 
-## Data and licensing
+## Privacy and data
 
-Examples, settings, and session history stay in the browser. The encrypted
-backup passphrase is never stored and cannot be recovered. Speech recognition
-is supplied by the browser and may use its vendor’s processing; using it is
-optional.
+Real data uses the `interview-recall-deck` IndexedDB database. Demo data uses `demo:interview-recall-deck`. Leaving or resetting the demo deletes its data.
 
-The paid unlock follows the Sociobot hosted-checkout contract. No product ID or
-payment-provider secret is embedded in this repository. Accessibility features,
-rehearsal, the recall sheet, and all export paths remain free.
+Encrypted backups use AES-256-GCM. The passphrase is not stored and cannot be recovered. Dictation uses browser speech recognition, whose vendor may process audio.
 
-See [the visual thesis](.factory/design.md), [privacy](privacy/index.html), and
-[terms](terms/index.html) for more detail.
+See the [visual thesis](.factory/design.md), [privacy policy](https://interview-recall-deck.sociobot.in/privacy), and [terms](https://interview-recall-deck.sociobot.in/terms).
 
 ## Deployment
 
-Deploy the contents of `dist/` as a static site. History fallback is not needed
-for app navigation because app routes use URL fragments; `/privacy/` and
-`/terms/` are emitted as real static paths. `public/staticwebapp.config.json`
-ships with the build: it revalidates HTML and `sw.js`, caches hashed `/assets/`
-for one year with `immutable`, and sends the product response-policy headers.
+Run `npm run build`, then deploy `dist/` as a static site. `staticwebapp.config.json` rewrites known app routes, returns the designed 404 for unknown paths, and sets cache and security headers.
+
+The factory command is:
+
+```sh
+/opt/fleet/lib/deploy-static.sh interview-recall-deck dist
+```
 
 ## License
 

@@ -3,10 +3,10 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 
 async function createExample(page: import('@playwright/test').Page, title = 'Checkout reliability'): Promise<void> {
-  await page.goto('/#/edit');
+  await page.goto('/edit');
   await page.getByLabel('Project or moment').fill(title);
   await page.getByLabel('Your role').fill('Lead engineer');
-  await page.getByLabel('Competencies').fill('Ownership, Debugging');
+  await page.getByLabel('Interview skills').fill('Ownership, Debugging');
   await page.getByLabel('Situation').fill('Retries were hiding payment failures before launch.');
   await page.getByLabel('Your action').fill('I traced the timeout and coordinated a safe rollback.');
   await page.getByLabel('Result or learning').fill('Failed payments fell by 30 percent.');
@@ -52,17 +52,42 @@ test('creates, persists, rehearses, and opens a recall sheet offline', async ({ 
 });
 
 test('legal pages have one main heading and a main landmark', async ({ page }) => {
-  for (const path of ['/privacy/', '/terms/']) {
+  for (const path of ['/privacy', '/terms']) {
     await page.goto(path);
     await expect(page.locator('main')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveCount(1);
   }
 });
 
-test('every app route has no serious or critical automated accessibility violations', async ({ page }) => {
+test('real routes set metadata, focus headings, support history, and return a real 404', async ({ page, request }) => {
   await page.goto('/');
-  for (const route of ['home', 'deck', 'edit', 'rehearse', 'sheet', 'settings']) {
-    await page.goto(`/#/${route}`);
+  await page.getByRole('link', { name: 'Deck', exact: true }).click();
+  await expect(page).toHaveURL('/deck');
+  await expect(page).toHaveTitle('Deck — Interview Recall Deck');
+  await expect(page.locator('h1')).toBeFocused();
+  expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('http://127.0.0.1:4173/deck');
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.locator('h1')).toBeFocused();
+  const missing = await request.get('/does-not-exist');
+  expect(missing.status()).toBe(404);
+  expect(await missing.text()).toContain('This page is not in your deck');
+});
+
+test('every route uses the shared legal links and route-specific title', async ({ page }) => {
+  const routes = ['/', '/demo', '/deck', '/edit', '/rehearse', '/sheet', '/settings', '/privacy', '/terms'];
+  for (const route of routes) {
+    await page.goto(route);
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toBeVisible();
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms' })).toBeVisible();
+    if (route === '/') await expect(page).toHaveTitle('Interview Recall Deck — rehearse work examples');
+    else await expect(page).not.toHaveTitle('Interview Recall Deck — rehearse work examples');
+  }
+});
+
+test('every app route has no serious or critical automated accessibility violations', async ({ page }) => {
+  for (const route of ['/', '/demo', '/deck', '/edit', '/rehearse', '/sheet', '/settings', '/privacy', '/terms', '/does-not-exist']) {
+    await page.goto(route);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter(item => ['serious', 'critical'].includes(item.impact ?? '')), route).toEqual([]);
   }
@@ -70,7 +95,7 @@ test('every app route has no serious or critical automated accessibility violati
 
 test('downloads and restores an encrypted deck backup with named form controls', async ({ page }) => {
   await createExample(page, 'Encrypted export proof');
-  await page.goto('/#/settings');
+  await page.goto('/settings');
   await page.getByLabel('Export passphrase').fill('correct horse battery staple');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download encrypted backup' }).click();
@@ -91,7 +116,7 @@ test('downloads and restores an encrypted deck backup with named form controls',
   await page.getByLabel('Backup passphrase').fill('correct horse battery staple');
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Replace deck from backup' }).click();
-  await expect(page).toHaveURL(/#\/deck$/);
+  await expect(page).toHaveURL(/\/deck$/);
   await expect(page.getByRole('heading', { name: 'Encrypted export proof' })).toBeVisible();
 });
 
@@ -101,7 +126,7 @@ test('restores a pasted license with its named form control', async ({ page }) =
     contentType: 'application/json',
     body: JSON.stringify({ valid: true, reason: 'ok' })
   }));
-  await page.goto('/#/settings');
+  await page.goto('/settings');
   await page.getByLabel('Already bought it? Paste your license').fill(token);
   await page.getByRole('button', { name: 'Verify and restore' }).click();
   await expect(page.getByRole('heading', { name: 'Unlimited is active' })).toBeVisible();
@@ -114,7 +139,7 @@ test('keeps the skip link and reduced-motion control keyboard operable without o
   await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('main')).toBeFocused();
-  await page.goto('/#/settings');
+  await page.goto('/settings');
   const reduceMotion = page.getByLabel('Reduce motion');
   await reduceMotion.focus();
   await page.keyboard.press('Space');

@@ -28,7 +28,7 @@ export function competencyMap(examples: Example[]): Map<string, Example[]> {
 
 export function toCsv(examples: Example[]): string {
   const escape = (value: string) => `"${value.replaceAll('"', '""')}"`;
-  const header = ['Project', 'Role', 'Situation', 'Action', 'Result', 'Competencies', 'Recall cue'];
+  const header = ['Project', 'Role', 'Situation', 'Action', 'Result', 'Interview skills', 'Recall cue'];
   const rows = examples.map(e => [e.title, e.role, e.situation, e.action, e.result, e.competencies.join('; '), e.cue]);
   return [header, ...rows].map(row => row.map(escape).join(',')).join('\n');
 }

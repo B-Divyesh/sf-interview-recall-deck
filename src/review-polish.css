@@ -1,0 +1,48 @@
+/* Review-round additions preserve the luminous glass landscape. */
+.demo-banner {
+  position: sticky; z-index: 60; top: 0; display: flex; align-items: center;
+  justify-content: center; gap: 24px; min-height: 48px; padding: 6px 18px;
+  background: #d8fbff; color: var(--cyan-950); box-shadow: 0 6px 24px rgba(0,0,0,.24);
+}
+.demo-banner span { display: flex; align-items: center; gap: 12px; }
+.demo-banner a, .banner-action {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 6px 8px;
+  border: 0; background: transparent; color: #073e46; font-weight: 800;
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.hero .action-note { margin: 12px 0 0; font-size: 13px; }
+.hero .trust {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; padding: 0;
+  color: var(--mist-300); font-size: 13px; list-style: none;
+}
+.hero .trust li::before { content: "●"; margin-right: 8px; color: var(--mint-300); }
+.boundary, .pricing { max-width: 900px; padding: 64px 0; border-top: 1px solid rgba(84,118,139,.35); }
+.boundary p, .pricing p, .legal-content p, .not-found > p { color: var(--mist-300); }
+.pricing { margin-left: auto; }
+.legal-content { max-width: 760px; }
+.legal-content h2 { margin-top: 48px; color: var(--cyan-300); }
+.legal-content a, .boundary a, .legal-note a, .app-shell > footer a, .card-actions a {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 4px;
+}
+.not-found { display: grid; place-items: center; min-height: 70vh; text-align: center; }
+.not-found h1 { max-width: 720px; }
+@media (min-width: 901px) {
+  .hero h1 { font-size: clamp(3.6rem,5vw,4rem); }
+}
+@media (max-width: 760px) {
+  .demo-banner { align-items: flex-start; flex-direction: column; gap: 0; padding: 8px 14px; }
+  .demo-banner span { width: 100%; justify-content: space-between; }
+  .brand { padding: 10px 20px; }
+  .brand a { min-height: 44px; }
+  .rail { grid-template-columns: repeat(4,1fr); }
+  .app-shell > footer a { min-width: 44px; justify-content: center; }
+  .skip-link { min-height: 44px; }
+  .toggle { position: relative; }
+  .toggle input { width: 50px; height: 44px; }
+  .hero { display: block; }
+  .hero-copy { padding-top: 12px; }
+  .hero h1 { font-size: clamp(2.55rem,12vw,3.7rem); }
+  .hero-art { min-height: 300px; }
+  .snapshot { padding: 34px 0; }
+  .boundary, .pricing { padding: 48px 0; }
+}

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://interview-recall-deck.sociobot.in/</loc></url>
-  <url><loc>https://interview-recall-deck.sociobot.in/privacy/</loc></url>
-  <url><loc>https://interview-recall-deck.sociobot.in/terms/</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/demo</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/deck</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/edit</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/rehearse</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/sheet</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/settings</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/privacy</loc></url>
+  <url><loc>https://interview-recall-deck.sociobot.in/terms</loc></url>
 </urlset>
