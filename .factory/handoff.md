@@ -101,6 +101,8 @@ Live post-deploy evidence:
   and all three cards with zero console errors.
 - Root responses revalidate; hashed JS is immutable for one year. Live CSP,
   Permissions-Policy, HSTS, Referrer-Policy, and `nosniff` headers are present.
+- Live crawl across all nine product/legal routes found 15 distinct internal
+  links; every target returned HTTP 200. No checkout or other dead link exists.
 
 ## Known gaps
 
