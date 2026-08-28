@@ -2,7 +2,8 @@
 
 ## Status: PASS
 
-Primary repair commit: `4524270` on `main`. Artifact class remains a static,
+Primary repair commit: `4524270`; deterministic gate follow-up: `83d5f0e` on
+`main`. Artifact class remains a static,
 local-first offline PWA. The luminous glass landscape, original generated art,
 dark-only palette, and interaction grammar are preserved.
 
@@ -42,6 +43,8 @@ appear on the landing page; and interactive targets pass 44×44 checks at 390px.
 - `npm test`: 6/6 Vitest unit/integration tests pass.
 - `npm run build`: pass; `dist/index.html` exists.
 - `npm run test:e2e`: 44/44 pass across 1440×900 and 390×844 Chromium.
+- Fresh clone of `83d5f0e`: install, lint, 6/6 unit tests, production build,
+  and the complete 44/44 browser suite all pass.
 - Clean clone of `4524270`: `npm ci` and `npm run build` pass. Every one of the
   14 claim commands was invoked independently; 28/28 desktop/mobile claim
   executions pass.
