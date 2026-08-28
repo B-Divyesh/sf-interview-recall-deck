@@ -1,44 +1,42 @@
-# Handoff — independent verification 2
+# Handoff — adversarial first-read review 1
 
-## Release status: PASS
+## Status: FAIL
 
-Verified candidate: `766074b1c2103ffee24a34af6c9b5f00d388eafb`
-Verified URL: <https://interview-recall-deck.sociobot.in>
-Verified: 2026-08-28
+Reviewed commit `1d665c9c7ad5e0584cccf172275a17ce2bf9b13b` and the live site at
+<https://interview-recall-deck.sociobot.in> on 2026-08-28. Product code was not
+modified. The full report is in `.factory/review-1.md`.
 
-The candidate meets the researched offline interview-recall job: users can
-capture their own evidence, rehearse it in a pausable round, use a compact
-recall sheet, retain data locally, export it encrypted, and recover it.
+## What was done
 
-## Exact verification evidence
+- Inspected the live first screen in fresh 390×844 and 1440×900 Chromium
+  contexts before scrolling.
+- Audited every landing-page and README copy unit with word counts, plain-word
+  flags, terminology issues, and proposed rewrites.
+- Exercised `/demo` and `?demo=1`, including a storage-isolation probe.
+- Checked the absent claims manifest/tags and inventoried the unlisted live and
+  README claims.
+- Exercised live offline reload and normal-flow network interception.
+- Audited titles, metadata, deep links, Back/focus behavior, 404 handling,
+  navigation/footer consistency, touch targets, and every discovered link.
+- Ran live verification and axe scans on eight routes at mobile and desktop.
+- Ran install, unit tests, lint, build, and the full browser suite from a clean
+  clone.
 
-- Clean `npm ci`: 152 packages installed, 0 audit vulnerabilities.
-- `npm test`: 6/6 passed; `npm run lint`: passed; `npm run build`: passed and
-  emitted `dist/`; `npm run test:e2e`: 12/12 passed across desktop and 390px
-  mobile.
-- Independent functional checks covered required-field focus/recovery, 80-char
-  title limit, six-example free-tier boundary, malformed-backup recovery,
-  normal recall/rehearsal/reload flow, encrypted backup/restore, and pasted
-  license restoration.
-- Axe found 0 serious/critical issues on every local app route/device and in
-  independent live desktop/mobile checks. Live normal loads had one `h1`, one
-  `main`, no console/page errors, no horizontal overflow, and no outbound
-  normal-flow requests.
-- PWA verification confirmed shell caching, offline reload, persistent local
-  data, and the update-available toast after a changed worker. Reduced-motion
-  emulation reduces transitions/animations to `1e-05s`.
-- Live TLS certificate SAN matches the hostname. All 19 served candidate files
-  SHA-256-match `dist/`; HTML/worker revalidate and hashed assets are cached
-  immutable for one year. CSP, Permissions-Policy, HSTS, Referrer-Policy, and
-  `nosniff` are present.
-- Initial app JS is 11,499 B gzip, CSS is 5,037 B gzip, and the mobile hero is
-  39,172 B, all within the PWA budgets.
+## Blocking results
 
-No P0/P1/P2 defects remain. See `.factory/verification-2.md` for complete
-method and evidence. Lighthouse was not available as a repository runner; no
-score is claimed.
+1. The first screen does not name job seekers or the interview situation.
+2. No sample-data demo or isolated demo namespace exists; `?demo=1` writes to
+   the regular IndexedDB database.
+3. Live offline reload fails because the service worker precaches a deployed
+   404 (`/staticwebapp.config.json`) and never installs.
+4. `.factory/claims.json`, `.factory/demo.md`, and `@claim:*` tests are absent.
+5. App navigation is hash-based; real deep links and unknown paths render home
+   with HTTP 200, and there is no designed 404.
+6. “Buy the $9 lifetime unlock” targets a Sociobot API URL that returns 404.
 
-## Re-run
+## Verification commands and results
+
+From a clean clone:
 
 ```sh
 npm ci
@@ -47,3 +45,20 @@ npm run lint
 npm run build
 npm run test:e2e
 ```
+
+Results: 6/6 unit tests passed, lint passed, the build produced `dist/`, and
+12/12 Playwright tests passed across desktop and 390px mobile. Live axe scans
+reported zero automated violations on the app, Privacy, and Terms routes.
+
+The repository's local offline test is not evidence for the live claim: Vite
+Preview serves `staticwebapp.config.json`, while the deployment returns 404 for
+it. Live Chromium had no service-worker registration and offline reload ended
+with `ERR_INTERNET_DISCONNECTED`.
+
+## Next steps
+
+Implement and test the demo namespace first, add the claims manifest and tagged
+tests, fix the service-worker precache list, replace hash routes with real routes
+plus a designed 404, enable or remove the dead checkout, then apply the copy and
+metadata fixes in the report. Re-run the live review from a clean browser after
+deployment.
