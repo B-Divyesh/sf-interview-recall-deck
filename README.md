@@ -2,8 +2,8 @@
 
 Interview Recall Deck helps job seekers recall real work examples under interview pressure.
 
-Try the isolated sample deck at <https://interview-recall-deck.sociobot.in/demo>.
-It includes three realistic examples and never reads or changes your real deck.
+Try the sample deck at <https://interview-recall-deck.sociobot.in/demo>.
+It includes three work examples. Demo changes never touch your deck.
 
 ## What it does
 
@@ -16,11 +16,11 @@ It includes three realistic examples and never reads or changes your real deck.
 
 The app does not generate interview answers. Your examples, settings, and rehearsal history stay in this browser. There is no account, cloud sync, analytics, or tracking.
 
-The free deck holds six examples. Rehearsal, the recall sheet, accessibility controls, backups, and CSV exports stay free. New $9 license purchases are paused while checkout is repaired. Existing license holders can restore access in Settings.
+The free deck holds six examples. Rehearsal, the recall sheet, accessibility controls, backups, and CSV exports stay free. New $9 licenses are currently unavailable. Existing license holders can restore access in Settings.
 
 ## Run locally
 
-Use Node.js 20 or newer.
+Run with Node.js 20 or newer.
 
 ```sh
 npm ci
@@ -36,21 +36,22 @@ npm test
 npm run lint
 npm run build
 npm run test:e2e
+npm run test:node20
 ```
 
 Each entry in [`.factory/claims.json`](.factory/claims.json) names its exact browser command. Build output goes to `dist/`, with `index.html` at its root.
 
 ## Privacy and data
 
-Real data uses the `interview-recall-deck` IndexedDB database. Demo data uses `demo:interview-recall-deck`. Leaving or resetting the demo deletes its data.
+Real data stays in the browser database named `interview-recall-deck` (IndexedDB). Demo data uses `demo:interview-recall-deck`. Resetting the demo or starting for real deletes its data.
 
-Encrypted backups use AES-256-GCM. The passphrase is not stored and cannot be recovered. Dictation uses browser speech recognition, whose vendor may process audio.
+Your browser encrypts each backup before download using AES-256-GCM. The passphrase is not stored and cannot be recovered. Your browser’s speech provider may receive the audio you dictate.
 
 See the [visual thesis](.factory/design.md), [privacy policy](https://interview-recall-deck.sociobot.in/privacy), and [terms](https://interview-recall-deck.sociobot.in/terms).
 
 ## Deployment
 
-Run `npm run build`, then deploy `dist/` as a static site. `staticwebapp.config.json` rewrites known app routes, returns the designed 404 for unknown paths, and sets cache and security headers.
+Run `npm run build`, then deploy `dist/` as a static site. `staticwebapp.config.json` serves known routes, returns the designed 404 for malformed paths, and sets cache and security headers.
 
 The factory command is:
 

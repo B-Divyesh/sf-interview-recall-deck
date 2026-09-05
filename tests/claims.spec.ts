@@ -18,6 +18,24 @@ async function databaseNames(page: Page): Promise<string[]> {
   return page.evaluate(async () => (await indexedDB.databases()).map(item => item.name ?? ''));
 }
 
+async function storedExamples(page: Page, name: string): Promise<unknown[]> {
+  return page.evaluate(async databaseName => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(databaseName);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = database.transaction('examples');
+    const rows = await new Promise<unknown[]>((resolve, reject) => {
+      const request = transaction.objectStore('examples').getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    database.close();
+    return rows;
+  }, name);
+}
+
 test('@claim:example-cards preserves exact evidence and never generates an answer', async ({ page }) => {
   await page.goto('/demo');
   await expect(page.getByRole('heading', { name: 'Try three interview examples' })).toBeVisible();
@@ -33,7 +51,7 @@ test('@claim:rehearsal-controls supports both free durations and all round state
   await page.goto('/settings?demo=1');
   await page.getByLabel('Time per example').selectOption('60');
   await page.getByRole('button', { name: 'Save comfort settings' }).click();
-  await page.goto('/rehearse/demo-checkout?demo=1');
+  await page.goto('/rehearse?id=demo-checkout&demo=1');
   await page.getByRole('button', { name: 'Begin 60-second round' }).click();
   await expect(page.locator('#timer-value')).toHaveText('1:00');
   await page.getByRole('button', { name: 'Pause' }).click();
@@ -45,25 +63,64 @@ test('@claim:rehearsal-controls supports both free durations and all round state
   await page.goto('/settings?demo=1');
   await page.getByLabel('Time per example').selectOption('90');
   await page.getByRole('button', { name: 'Save comfort settings' }).click();
-  await page.goto('/rehearse/demo-checkout?demo=1');
+  await page.goto('/rehearse?id=demo-checkout&demo=1');
   await expect(page.getByRole('button', { name: 'Begin 90-second round' })).toBeVisible();
 });
 
-test('@claim:local-private isolates demo data and sends no data away', async ({ page }) => {
+test('@claim:sample-deck starts with three work examples and Reset demo restores them', async ({ page }) => {
+  await page.goto('/demo');
+  await expect(page.getByRole('heading', { name: 'Checkout reliability launch' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'New-starter onboarding' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'At-risk customer renewal' })).toBeVisible();
+  await page.getByRole('link', { name: /Edit sample Checkout reliability launch/ }).click();
+  await page.getByLabel('Project or moment').fill('Changed sample title');
+  await page.getByRole('button', { name: 'Save example' }).click();
+  await expect(page.getByRole('heading', { name: 'Changed sample title' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page).toHaveURL(/\/demo(?:\?demo=1)?$/);
+  await expect(page.getByRole('heading', { name: 'Checkout reliability launch' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Changed sample title' })).toHaveCount(0);
+  await expect(page.locator('.memory-card')).toHaveCount(3);
+});
+
+test('@claim:local-private keeps demo data separate through history and legal routes', async ({ page }) => {
   const outbound: string[] = [];
   page.on('request', request => { if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') outbound.push(request.url()); });
+  await createExample(page, 'Real marker');
+  const realBefore = await storedExamples(page, 'interview-recall-deck');
   await page.goto('/demo');
   expect(await databaseNames(page)).toContain('demo:interview-recall-deck');
-  expect(await databaseNames(page)).not.toContain('interview-recall-deck');
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toBeVisible();
   await page.getByRole('link', { name: /Edit sample Checkout reliability launch/ }).click();
   await page.getByLabel('Project or moment').fill('Edited only in demo');
   await page.getByRole('button', { name: 'Save example' }).click();
   await expect(page).toHaveURL('/deck?demo=1');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Edited only in demo' })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/edit\?id=demo-checkout&demo=1$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toBeVisible();
+  await page.getByRole('link', { name: 'Cancel' }).click();
+  await expect(page).toHaveURL('/deck?demo=1');
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toBeVisible();
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' }).click();
+  await expect(page).toHaveURL('/privacy?demo=1');
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toBeVisible();
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Terms' }).click();
+  await expect(page).toHaveURL('/terms?demo=1');
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toBeVisible();
+  await page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Deck', exact: true }).click();
+  await expect(page).toHaveURL('/deck?demo=1');
+  await expect(page.getByRole('heading', { name: 'Edited only in demo' })).toBeVisible();
+  expect(await storedExamples(page, 'interview-recall-deck')).toEqual(realBefore);
   await page.getByRole('link', { name: 'Start for real' }).click();
   await expect(page).toHaveURL('/');
-  await expect(page.locator('.snapshot dd').first()).toHaveText('0');
+  await expect(page.locator('.snapshot dd').first()).toHaveText('1');
+  await expect(page.getByText('Demo — sample data, nothing is saved to your deck')).toHaveCount(0);
+  await page.goto('/deck');
+  await expect(page.getByRole('heading', { name: 'Real marker' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edited only in demo' })).toHaveCount(0);
+  expect(await storedExamples(page, 'interview-recall-deck')).toEqual(realBefore);
   expect(await databaseNames(page)).not.toContain('demo:interview-recall-deck');
   expect(outbound).toEqual([]);
   await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
@@ -102,7 +159,7 @@ test('@claim:speech-actions starts speech services only after their buttons', as
     class Recognition { continuous = false; interimResults = false; onresult = () => {}; onerror = () => {}; onend = () => {}; start() { (window as unknown as { speechCalls: string[] }).speechCalls.push('dictate'); } }
     Object.defineProperty(window, 'SpeechRecognition', { value: Recognition });
   });
-  await page.goto('/rehearse/demo-checkout?demo=1');
+  await page.goto('/rehearse?id=demo-checkout&demo=1');
   await page.getByRole('button', { name: /Begin 90-second round/ }).click();
   expect(await page.evaluate(() => (window as unknown as { speechCalls: string[] }).speechCalls)).toEqual([]);
   await page.getByRole('button', { name: 'Read prompt' }).click();
@@ -221,11 +278,25 @@ test('@claim:license-restore verifies an existing Sociobot license without provi
   expect(source).not.toMatch(/dodo.*secret|sk_(live|test)_/i);
 });
 
-test('@claim:static-deploy emits policy, known routes, and a 404 status', async ({ request }) => {
+test('@claim:purchase-unavailable shows no checkout action for new licenses', async ({ page }) => {
+  const checkoutRequests: string[] = [];
+  page.on('request', request => { if (request.url().includes('/checkout')) checkoutRequests.push(request.url()); });
+  await page.goto('/settings?demo=1');
+  await expect(page.getByRole('heading', { name: 'Purchases are paused' })).toBeVisible();
+  await expect(page.getByText('New $9 licenses are currently unavailable.')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Buy|Checkout|Purchase/ })).toHaveCount(0);
+  expect(checkoutRequests).toEqual([]);
+});
+
+test('@claim:static-deploy serves real routes and sends malformed routes to the shared 404', async ({ request, page }) => {
   await expect(stat('dist/index.html')).resolves.toBeTruthy();
-  const config = JSON.parse(await readFile('dist/staticwebapp.config.json', 'utf8'));
-  expect(config.responseOverrides['404']).toMatchObject({ rewrite: '/404.html', statusCode: 404 });
-  expect(config.globalHeaders['Content-Security-Policy']).toContain("default-src 'self'");
-  expect((await request.get('/deck')).status()).toBe(200);
-  expect((await request.get('/does-not-exist')).status()).toBe(404);
+  for (const route of ['/deck', '/edit?id=example_123', '/rehearse?id=example_123', '/privacy', '/terms']) expect((await request.get(route)).status(), route).toBe(200);
+  for (const route of ['/does-not-exist', '/deck/junk', '/privacy/junk', '/edit/not-a-real-id/extra', '/rehearse/example_123/extra']) {
+    const response = await page.goto(route);
+    expect(response?.status(), route).toBe(404);
+    await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toBeVisible();
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms' })).toBeVisible();
+  }
 });

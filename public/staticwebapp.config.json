@@ -10,14 +10,14 @@
     "X-Content-Type-Options": "nosniff"
   },
   "routes": [
-    { "route": "/demo*", "rewrite": "/index.html" },
-    { "route": "/deck*", "rewrite": "/index.html" },
-    { "route": "/edit*", "rewrite": "/index.html" },
-    { "route": "/rehearse*", "rewrite": "/index.html" },
-    { "route": "/sheet*", "rewrite": "/index.html" },
-    { "route": "/settings*", "rewrite": "/index.html" },
-    { "route": "/privacy*", "rewrite": "/index.html" },
-    { "route": "/terms*", "rewrite": "/index.html" },
+    { "route": "/demo", "rewrite": "/index.html" },
+    { "route": "/deck", "rewrite": "/index.html" },
+    { "route": "/edit", "rewrite": "/index.html" },
+    { "route": "/rehearse", "rewrite": "/index.html" },
+    { "route": "/sheet", "rewrite": "/index.html" },
+    { "route": "/settings", "rewrite": "/index.html" },
+    { "route": "/privacy", "rewrite": "/index.html" },
+    { "route": "/terms", "rewrite": "/index.html" },
     {
       "route": "/assets/*",
       "headers": {

@@ -83,6 +83,12 @@ test('every route uses the shared legal links and route-specific title', async (
     if (route === '/') await expect(page).toHaveTitle('Interview Recall Deck — rehearse work examples');
     else await expect(page).not.toHaveTitle('Interview Recall Deck — rehearse work examples');
   }
+  const response = await page.goto('/does-not-exist');
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('link', { name: 'Skip to main content' })).toHaveCount(1);
+  await expect(page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Deck', exact: true })).toBeVisible();
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toBeVisible();
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms' })).toBeVisible();
 });
 
 test('every app route has no serious or critical automated accessibility violations', async ({ page }) => {

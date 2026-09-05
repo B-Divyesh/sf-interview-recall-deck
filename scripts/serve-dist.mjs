@@ -20,7 +20,7 @@ function headers(pathname) {
 createServer(async (request, response) => {
   const pathname = new URL(request.url ?? '/', `http://${request.headers.host}`).pathname;
   let status = 200;
-  let file = pathname === '/' || appRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`)) ? 'index.html' : pathname.slice(1);
+  let file = pathname === '/' || appRoutes.includes(pathname) ? 'index.html' : pathname.slice(1);
   if (pathname === '/staticwebapp.config.json') file = 'missing';
   let full = normalize(join(root, file));
   if (!full.startsWith(root)) full = join(root, 'missing');

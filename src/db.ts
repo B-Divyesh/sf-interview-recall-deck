@@ -5,14 +5,15 @@ const REAL_DB_NAME = 'interview-recall-deck';
 const DEMO_DB_NAME = 'demo:interview-recall-deck';
 const DB_VERSION = 1;
 
-function databaseName(): string {
-  const url = new URL(location.href);
-  return url.pathname === '/demo' || url.searchParams.get('demo') === '1' ? DEMO_DB_NAME : REAL_DB_NAME;
+export type StorageNamespace = 'real' | 'demo';
+
+function databaseName(namespace: StorageNamespace): string {
+  return namespace === 'demo' ? DEMO_DB_NAME : REAL_DB_NAME;
 }
 
-function openDb(): Promise<IDBDatabase> {
+function openDb(namespace: StorageNamespace): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(databaseName(), DB_VERSION);
+    const request = indexedDB.open(databaseName(namespace), DB_VERSION);
     request.onerror = () => reject(request.error);
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -40,48 +41,48 @@ function requestPromise<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-async function store(name: string, mode: IDBTransactionMode = 'readonly') {
-  const db = await openDb();
+async function store(namespace: StorageNamespace, name: string, mode: IDBTransactionMode = 'readonly') {
+  const db = await openDb(namespace);
   const transaction = db.transaction(name, mode);
   transaction.oncomplete = () => db.close();
   return transaction.objectStore(name);
 }
 
-export async function getExamples(): Promise<Example[]> {
-  const objectStore = await store('examples');
+export async function getExamples(namespace: StorageNamespace): Promise<Example[]> {
+  const objectStore = await store(namespace, 'examples');
   const rows = await requestPromise(objectStore.getAll()) as Example[];
   return rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export async function saveExample(example: Example): Promise<void> {
-  await requestPromise((await store('examples', 'readwrite')).put(example));
+export async function saveExample(namespace: StorageNamespace, example: Example): Promise<void> {
+  await requestPromise((await store(namespace, 'examples', 'readwrite')).put(example));
 }
 
-export async function deleteExample(id: string): Promise<void> {
-  await requestPromise((await store('examples', 'readwrite')).delete(id));
+export async function deleteExample(namespace: StorageNamespace, id: string): Promise<void> {
+  await requestPromise((await store(namespace, 'examples', 'readwrite')).delete(id));
 }
 
-export async function getSessions(): Promise<Session[]> {
-  const objectStore = await store('sessions');
+export async function getSessions(namespace: StorageNamespace): Promise<Session[]> {
+  const objectStore = await store(namespace, 'sessions');
   const rows = await requestPromise(objectStore.getAll()) as Session[];
   return rows.sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 }
 
-export async function saveSession(session: Session): Promise<void> {
-  await requestPromise((await store('sessions', 'readwrite')).put(session));
+export async function saveSession(namespace: StorageNamespace, session: Session): Promise<void> {
+  await requestPromise((await store(namespace, 'sessions', 'readwrite')).put(session));
 }
 
-export async function getPreferences(): Promise<Preferences> {
-  const saved = await requestPromise((await store('settings')).get('preferences')) as Partial<Preferences> | undefined;
+export async function getPreferences(namespace: StorageNamespace): Promise<Preferences> {
+  const saved = await requestPromise((await store(namespace, 'settings')).get('preferences')) as Partial<Preferences> | undefined;
   return { ...defaultPreferences, ...saved };
 }
 
-export async function savePreferences(preferences: Preferences): Promise<void> {
-  await requestPromise((await store('settings', 'readwrite')).put(preferences, 'preferences'));
+export async function savePreferences(namespace: StorageNamespace, preferences: Preferences): Promise<void> {
+  await requestPromise((await store(namespace, 'settings', 'readwrite')).put(preferences, 'preferences'));
 }
 
-export async function replaceAll(examples: Example[], sessions: Session[]): Promise<void> {
-  const db = await openDb();
+export async function replaceAll(namespace: StorageNamespace, examples: Example[], sessions: Session[]): Promise<void> {
+  const db = await openDb(namespace);
   const transaction = db.transaction(['examples', 'sessions'], 'readwrite');
   const examplesStore = transaction.objectStore('examples');
   const sessionsStore = transaction.objectStore('sessions');
