@@ -4,6 +4,7 @@
 
 - Product: Interview Recall Deck, a local-first PWA for job seekers who need to recall truthful work examples during interviews.
 - Implementation SHA: `9581fd43af8805f60ccad886d6416fcfe30c2a54`
+- Documentation/evidence SHA: `d6d89cc0021128e6a6b7645ed76a811880a69a5a`
 - Live URL: <https://interview-recall-deck.sociobot.in>
 - Deployment: static deployment `8d9e3819-1470-427d-baf2-a18236b72d91` completed successfully on 2026-09-05.
 
